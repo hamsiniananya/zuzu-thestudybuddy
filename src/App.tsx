@@ -40,6 +40,8 @@ type LastAction =
   | 'chatted'
   | 'clicked';
 
+type Accessory = 'none' | 'bow' | 'headphones' | 'crown';
+
 const reactions: Reaction[] = [
   {
     label: 'I studied',
@@ -126,6 +128,13 @@ function App() {
   const [bubbleVisible, setBubbleVisible] = useState(true);
   const [lastAction, setLastAction] = useState<LastAction>('none');
   const [interactionCount, setInteractionCount] = useState(0);
+  const [accessory, setAccessory] = useState<Accessory>(() => {
+  return (
+    (localStorage.getItem('zuzu-accessory') as Accessory) ||
+    'none'
+  );
+});
+
 
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -353,6 +362,26 @@ function App() {
     setBubbleVisible(true);
   };
 
+const changeAccessory = (newAccessory: Accessory) => {
+  setAccessory(newAccessory);
+  localStorage.setItem('zuzu-accessory', newAccessory);
+
+  setMessage(
+    newAccessory === 'none'
+      ? 'fine. naked ZUZU it is.'
+      : newAccessory === 'bow'
+        ? 'do I look cute or WHAT.'
+        : newAccessory === 'headphones'
+          ? 'do not disturb. I am listening to important things.'
+          : 'I have been promoted.'
+  );
+
+  setMood('happy');
+  setIsTalking(true);
+  setBubbleVisible(true);
+  playSound('zuzu-click.mp3');
+};  
+
   const toggleMenu = () => {
   if (isDragging.current) {
     isDragging.current = false;
@@ -480,8 +509,25 @@ function App() {
               role="img"
               aria-label="ZUZU, a black pixel cat companion"
             >
-              <span className="cat-ear ear-left" />
-              <span className="cat-ear ear-right" />
+              {accessory === 'bow' && (
+                <span className="zuzu-accessory accessory-bow" />
+              )}
+
+              {accessory === 'headphones' && (
+                <span className="zuzu-accessory accessory-headphones">
+                  <span className="headphone-band" />
+                  <span className="headphone-left" />
+                  <span className="headphone-right" />
+                </span>
+              )}
+
+              {accessory === 'crown' && (
+                <span className="zuzu-accessory accessory-crown">♛</span>
+              )}
+            
+
+            <span className="cat-ear ear-left" />
+            <span className="cat-ear ear-right" />
 
               <span className="cat-head">
                 <span className="cat-eye eye-left" />
@@ -572,7 +618,39 @@ function App() {
                 </button>
               ))}
             </div>
+          <div className="customize-section">
+  <div className="menu-title">make ZUZU fashionable</div>
 
+  <div className="accessory-buttons">
+    <button
+      className="accessory-button"
+      onClick={() => changeAccessory('none')}
+    >
+      None
+    </button>
+
+    <button
+      className="accessory-button"
+      onClick={() => changeAccessory('bow')}
+    >
+      🎀
+    </button>
+
+    <button
+      className="accessory-button"
+      onClick={() => changeAccessory('headphones')}
+    >
+      🎧
+    </button>
+
+    <button
+      className="accessory-button"
+      onClick={() => changeAccessory('crown')}
+    >
+      👑
+    </button>
+  </div>
+</div>
             <form
               className="menu-form"
               onSubmit={sendMessage}

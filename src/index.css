@@ -337,7 +337,7 @@ button {
   position: absolute;
   bottom: 175px;
   right: 0;
-  width: 280px;
+  width: 300px;
   background: #f1eddc;
   border: 3px solid #29272a;
   box-shadow: 6px 6px 0 #29272a;
@@ -367,19 +367,24 @@ button {
 .menu-reactions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 7px;
-  margin-bottom: 11px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .menu-button {
   border: 2px solid #29272a;
-  min-height: 36px;
+  min-height: 38px;
+  padding: 6px 8px;
+
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+
   font-size: 10px;
+  line-height: 1.1;
   color: #29272a;
+
   box-shadow: 3px 3px 0 #29272a;
   transition: transform .12s, box-shadow .12s;
 }
@@ -589,4 +594,176 @@ button {
     opacity: 0;
     transform: scale(1.3) translateY(-70px) rotate(30deg);
   }
+}
+/* ================================
+   ZUZU ACCESSORIES
+   ================================ */
+
+.zuzu-accessory {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* 🎀 BOW */
+.accessory-bow {
+  width: 30px;
+  height: 18px;
+  top: 18px;
+  right: 7px;
+}
+
+.accessory-bow::before,
+.accessory-bow::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  width: 14px;
+  height: 14px;
+  background: #ed8fa3;
+  border: 3px solid #111216;
+}
+
+.accessory-bow::before {
+  left: 0;
+  transform: rotate(25deg);
+}
+
+.accessory-bow::after {
+  right: 0;
+  transform: rotate(-25deg);
+}
+
+.accessory-bow {
+  background: #f2c84b;
+  border: 2px solid #111216;
+  width: 8px;
+  height: 8px;
+  border-radius: 0;
+  top: 27px;
+  right: 20px;
+}
+
+
+/* 🎧 HEADPHONES */
+
+.accessory-headphones {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+}
+
+.headphone-band {
+  position: absolute;
+  width: 108px;
+  height: 92px;
+  left: 21px;
+  top: 7px;
+  border: 6px solid #111216;
+  border-bottom: 0;
+  border-radius: 55px 55px 0 0;
+}
+
+.headphone-left,
+.headphone-right {
+  position: absolute;
+  top: 42px;
+  width: 18px;
+  height: 30px;
+  background: #c9c5d6;
+  border: 4px solid #111216;
+}
+
+.headphone-left {
+  left: 17px;
+}
+
+.headphone-right {
+  right: 17px;
+}
+
+
+/* 👑 ZUZU CROWN */
+.accessory-crown {
+  position: absolute;
+  z-index: 20;
+  top: -9px;
+  left: 47px;
+
+  font-family: Georgia, serif;
+  font-size: 36px;
+  line-height: 1;
+
+  color: #f2c84b !important;
+  -webkit-text-fill-color: #f2c84b !important;
+  -webkit-text-stroke: 1px #111216;
+
+  text-shadow: 2px 2px 0 #111216;
+
+  transform: rotate(-3deg);
+  pointer-events: none;
+}
+
+/* ================================
+   CLEAN ZUZU CUSTOMIZATION
+   ================================ */
+
+.customize-section {
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.customize-section .menu-title {
+  margin-bottom: 9px;
+}
+
+.accessory-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.accessory-button {
+  font-size: 10px;
+  min-width: 0;
+  min-height: 48px;
+
+  border: 2px solid #29272a;
+  background: #fffdf3;
+  color: #29272a;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  gap: 3px;
+
+  font-size: 8px;
+  line-height: 1;
+
+  box-shadow: 2px 2px 0 #29272a;
+
+  transition:
+    transform .12s,
+    box-shadow .12s,
+    background .12s;
+}
+
+.accessory-button:hover {
+  background: #edb0bd;
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #29272a;
+}
+
+.accessory-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+.accessory-icon {
+  font-size: 24px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
