@@ -21,7 +21,11 @@ type Mood =
   | 'proud'
   | 'celebrating'
   | 'confused'
-  | 'judging';
+  | 'judging'
+  | 'shocked'
+  | 'sad'
+  | 'smug'
+  | 'excited';
 
 type Reaction = {
   label: string;
@@ -41,6 +45,9 @@ type LastAction =
   | 'clicked';
 
 type Accessory = 'none' | 'bow' | 'headphones' | 'crown';
+type Skin = 'black' | 'golden' | 'white' | 'pink';
+
+type Clothes = 'none' | 'scarf' | 'tie' | 'hoodie' | 'backpack';
 
 const reactions: Reaction[] = [
   {
@@ -123,6 +130,8 @@ function App() {
   const [message, setMessage] = useState(starterMessage);
   const [input, setInput] = useState('');
   const [isTalking, setIsTalking] = useState(false);
+  const [isBlinking, setIsBlinking] = useState(false);
+  const [isAutonomous, setIsAutonomous] = useState(false);
   const [sparkles, setSparkles] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bubbleVisible, setBubbleVisible] = useState(true);
@@ -134,9 +143,24 @@ function App() {
     'none'
   );
 });
+const [skin, setSkin] = useState<Skin>(() => {
+  return (
+    (localStorage.getItem('zuzu-skin') as Skin) ||
+    'black'
+  );
+});
 
+const [clothes, setClothes] = useState<Clothes>(() => {
+  return (
+    (localStorage.getItem('zuzu-clothes') as Clothes) ||
+    'none'
+  );
+});
+
+const [styleOpen, setStyleOpen] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
+  
 
   // Used to distinguish a click from a drag.
   const pointerStart = useRef({ x: 0, y: 0 });
@@ -151,6 +175,96 @@ function App() {
 
     return () => window.clearTimeout(timeout);
   }, [isTalking]);
+
+  useEffect(() => {
+  let blinkTimer: number;
+
+  const scheduleBlink = () => {
+    const delay = 3000 + Math.random() * 4000;
+
+    blinkTimer = window.setTimeout(() => {
+      setIsBlinking(true);
+
+      window.setTimeout(() => {
+        setIsBlinking(false);
+
+        if (Math.random() < 0.15) {
+          window.setTimeout(() => {
+            setIsBlinking(true);
+
+            window.setTimeout(() => {
+              setIsBlinking(false);
+              scheduleBlink();
+            }, 120);
+          }, 150);
+        } else {
+          scheduleBlink();
+        }
+      }, 120);
+    }, delay);
+  };
+
+  scheduleBlink();
+
+  return () => window.clearTimeout(blinkTimer);
+}, []);
+
+useEffect(() => {
+  if (menuOpen || styleOpen) return;
+
+  let behaviourTimer: number;
+
+  const scheduleBehaviour = () => {
+    const delay = 7000 + Math.random() * 9000;
+
+    behaviourTimer = window.setTimeout(() => {
+      const behaviours = [
+        {
+          mood: 'smug' as Mood,
+          duration: 1800,
+        },
+        {
+          mood: 'suspicious' as Mood,
+          duration: 2200,
+        },
+        {
+          mood: 'shocked' as Mood,
+          duration: 1200,
+        },
+        {
+          mood: 'sleepy' as Mood,
+          duration: 2500,
+        },
+        {
+          mood: 'judging' as Mood,
+          duration: 2200,
+        },
+        {
+          mood: 'excited' as Mood,
+          duration: 1500,
+        },
+      ];
+
+      const behaviour =
+        behaviours[
+          Math.floor(Math.random() * behaviours.length)
+        ];
+
+      setMood(behaviour.mood);
+      setIsAutonomous(true);
+
+      window.setTimeout(() => {
+        setIsAutonomous(false);
+        setMood('happy');
+        scheduleBehaviour();
+      }, behaviour.duration);
+    }, delay);
+  };
+
+  scheduleBehaviour();
+
+  return () => window.clearTimeout(behaviourTimer);
+}, [menuOpen, styleOpen]);
 
   useEffect(() => {
   if (menuOpen) return;
@@ -251,13 +365,20 @@ function App() {
           Math.floor(Math.random() * idleLines.length)
         ];
 
-      nextMood =
-        Math.random() < 0.7
-          ? 'happy'
-          : Math.random() < 0.5
-            ? 'suspicious'
-            : 'sleepy';
-    }
+const idleMoods: Mood[] = [
+  'happy',
+  'suspicious',
+  'sleepy',
+  'shocked',
+  'sad',
+  'smug',
+  'excited',
+  'judging',
+  'confused',
+];
+
+nextMood =
+  idleMoods[Math.floor(Math.random() * idleMoods.length)];}
 
     setMood(nextMood);
     setMessage(next);
@@ -380,7 +501,47 @@ const changeAccessory = (newAccessory: Accessory) => {
   setIsTalking(true);
   setBubbleVisible(true);
   playSound('zuzu-click.mp3');
-};  
+};
+
+const changeSkin = (newSkin: Skin) => {
+  setSkin(newSkin);
+  localStorage.setItem('zuzu-skin', newSkin);
+
+  setMessage(
+    newSkin === 'black'
+      ? 'classic ZUZU has returned.'
+      : newSkin === 'golden'
+        ? 'golden era. literally.'
+        : newSkin === 'white'
+          ? 'ghost mode activated.'
+          : 'pink ZUZU supremacy.'
+  );
+
+  setIsTalking(true);
+  setBubbleVisible(true);
+  playSound('zuzu-click.mp3');
+};
+
+const changeClothes = (newClothes: Clothes) => {
+  setClothes(newClothes);
+  localStorage.setItem('zuzu-clothes', newClothes);
+
+  setMessage(
+    newClothes === 'none'
+      ? 'fine. casual ZUZU.'
+      : newClothes === 'scarf'
+        ? 'fashionably prepared.'
+        : newClothes === 'tie'
+          ? 'I have a meeting.'
+          : newClothes === 'hoodie'
+            ? 'maximum comfort achieved.'
+            : 'I brought my entire life with me.'
+  );
+
+  setIsTalking(true);
+  setBubbleVisible(true);
+  playSound('zuzu-click.mp3');
+};
 
   const toggleMenu = () => {
   if (isDragging.current) {
@@ -505,7 +666,7 @@ const changeAccessory = (newAccessory: Accessory) => {
             }`}
           >
             <div
-              className="pixel-cat"
+              className={`pixel-cat skin-${skin}`}
               role="img"
               aria-label="ZUZU, a black pixel cat companion"
             >
@@ -525,16 +686,48 @@ const changeAccessory = (newAccessory: Accessory) => {
                 <span className="zuzu-accessory accessory-crown">♛</span>
               )}
             
+              {clothes === 'scarf' && (
+  <span className="zuzu-clothes clothes-scarf" />
+)}
 
+{clothes === 'tie' && (
+  <span className="zuzu-clothes clothes-tie" />
+)}
+
+{clothes === 'hoodie' && (
+  <span className="zuzu-clothes clothes-hoodie" />
+)}
+
+{clothes === 'backpack' && (
+  <span className="zuzu-clothes clothes-backpack" />
+)}
             <span className="cat-ear ear-left" />
             <span className="cat-ear ear-right" />
 
               <span className="cat-head">
-                <span className="cat-eye eye-left" />
-                <span className="cat-eye eye-right" />
-                <span className="cat-nose" />
-                <span className="cat-mouth" />
-              </span>
+  
+  <span
+    className={`cat-eye eye-left ${
+      isBlinking ? 'blinking' : ''
+    }`}
+  />
+
+  <span
+    className={`cat-eye eye-right ${
+      isBlinking ? 'blinking' : ''
+    }`}
+  />
+
+  
+
+  <span className="cat-brow brow-left" />
+  <span className="cat-brow brow-right" />
+
+  <span className="cat-nose" />
+  <span className="cat-mouth" />
+
+  <span className="expression-mark">!</span>
+</span>
 
               <span className="cat-body" />
               <span className="cat-tail" />
@@ -619,37 +812,15 @@ const changeAccessory = (newAccessory: Accessory) => {
               ))}
             </div>
           <div className="customize-section">
-  <div className="menu-title">make ZUZU fashionable</div>
-
-  <div className="accessory-buttons">
-    <button
-      className="accessory-button"
-      onClick={() => changeAccessory('none')}
-    >
-      None
-    </button>
-
-    <button
-      className="accessory-button"
-      onClick={() => changeAccessory('bow')}
-    >
-      🎀
-    </button>
-
-    <button
-      className="accessory-button"
-      onClick={() => changeAccessory('headphones')}
-    >
-      🎧
-    </button>
-
-    <button
-      className="accessory-button"
-      onClick={() => changeAccessory('crown')}
-    >
-      👑
-    </button>
-  </div>
+  <button
+    className="style-button"
+    onClick={() => {
+      setStyleOpen(true);
+      setBubbleVisible(false);
+    }}
+  >
+    🎨 STYLE ZUZU
+  </button>
 </div>
             <form
               className="menu-form"
@@ -675,6 +846,108 @@ const changeAccessory = (newAccessory: Accessory) => {
           </div>
         )}
       </div>
+      
+      {styleOpen && (
+        <div className="style-overlay">
+          <div className="style-panel">
+
+            <div className="style-header">
+              <span>🎨 STYLE ZUZU</span>
+
+              <button
+                className="style-close"
+                onClick={() => {
+                  setStyleOpen(false);
+                  setBubbleVisible(true);
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="style-section">
+              <div className="style-title">SKIN</div>
+
+              <div className="style-options">
+                <button onClick={() => changeSkin('black')}>
+                  ● Black
+                </button>
+
+                <button onClick={() => changeSkin('golden')}>
+                  🟡 Golden
+                </button>
+
+                <button onClick={() => changeSkin('white')}>
+                  ⚪ White
+                </button>
+
+                <button onClick={() => changeSkin('pink')}>
+                  🩷 Pink
+                </button>
+              </div>
+            </div>
+
+            <div className="style-section">
+              <div className="style-title">ACCESSORIES</div>
+
+              <div className="style-options">
+                <button onClick={() => changeAccessory('none')}>
+                  🐈 None
+                </button>
+
+                <button onClick={() => changeAccessory('bow')}>
+                  🎀 Bow
+                </button>
+
+                <button onClick={() => changeAccessory('headphones')}>
+                  🎧 Headphones
+                </button>
+
+                <button onClick={() => changeAccessory('crown')}>
+                  👑 Crown
+                </button>
+              </div>
+            </div>
+
+            <div className="style-section">
+              <div className="style-title">CLOTHES</div>
+
+              <div className="style-options">
+                <button onClick={() => changeClothes('none')}>
+                  None
+                </button>
+
+                <button onClick={() => changeClothes('scarf')}>
+                  🧣 Scarf
+                </button>
+
+                <button onClick={() => changeClothes('tie')}>
+                  👔 Tie
+                </button>
+
+                <button onClick={() => changeClothes('hoodie')}>
+                  🧥 Hoodie
+                </button>
+
+                <button onClick={() => changeClothes('backpack')}>
+                  🎒 Backpack
+                </button>
+              </div>
+            </div>
+
+            <button
+              className="style-done"
+              onClick={() => {
+                setStyleOpen(false);
+                setBubbleVisible(true);
+              }}
+            >
+              DONE
+            </button>
+
+          </div>
+        </div>
+      )}
 
       {sparkles && (
         <div

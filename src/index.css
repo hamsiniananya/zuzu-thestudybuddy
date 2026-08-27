@@ -40,18 +40,7 @@ button {
 }
 
 .scanlines {
-  position: fixed;
-  inset: 0;
-  opacity: .06;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent 0,
-    transparent 3px,
-    #fff 4px,
-    transparent 5px
-  );
-  z-index: 100;
+  display: none;
 }
 
 /* The pet sits bottom-right by default, floats above content */
@@ -120,6 +109,7 @@ button {
 /* Pixel cat (unchanged character) */
 .pixel-cat {
   position: relative;
+  z-index: 1;
   width: 150px;
   height: 140px;
   image-rendering: pixelated;
@@ -161,9 +151,9 @@ button {
 
 .cat-eye {
   position: absolute;
-  top: 28px;
+  top: 24px;
   width: 20px;
-  height: 22px;
+  height: 20px;
   background: #f2c84b;
   border: 4px solid #111216;
   box-shadow: inset 6px 0 0 #f7e5a1;
@@ -179,8 +169,8 @@ button {
 
 .cat-nose {
   position: absolute;
-  left: 43px;
-  top: 52px;
+  left: 42px;
+  top: 48px;
   width: 9px;
   height: 7px;
   background: #ee8a92;
@@ -189,8 +179,8 @@ button {
 
 .cat-mouth {
   position: absolute;
-  left: 44px;
-  top: 63px;
+  left: 43px;
+  top: 58px;
   width: 8px;
   height: 5px;
   border-bottom: 2px solid #ee8a92;
@@ -350,7 +340,7 @@ button {
   .pet-menu {
     bottom: 155px;
     right: 0;
-    width: 240px;
+    width: 260px;
   }
 }
 
@@ -766,4 +756,823 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+/* =================================
+   ZUZU STYLE BUTTON
+   ================================= */
+
+.style-button {
+  width: 100%;
+  height: 40px;
+  margin-top: 2px;
+  margin-bottom: 16px;
+
+  border: 2px solid #29272a;
+  background: #edb0bd;
+  color: #29272a;
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+
+  box-shadow: 3px 3px 0 #29272a;
+
+  transition: transform .12s, box-shadow .12s;
+}
+
+.style-button:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #29272a;
+}
+
+.style-button:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+
+/* =================================
+   STYLE POPUP
+   ================================= */
+
+.style-overlay {
+  position: fixed;
+  inset: 0;
+
+  z-index: 200;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+}
+
+.style-panel {
+  width: 285px;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  background: #f1eddc;
+  border: 3px solid #29272a;
+  box-shadow: 6px 6px 0 #29272a;
+
+  padding: 14px;
+
+  pointer-events: auto;
+
+  animation: menu-pop .22s ease;
+}
+
+
+/* Header */
+
+.style-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  color: #d46e87;
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #aeb2a0;
+}
+
+.style-close {
+  border: 0;
+  background: transparent;
+
+  color: #29272a;
+
+  font-size: 20px;
+  line-height: 1;
+
+  padding: 0;
+}
+
+
+/* Sections */
+
+.style-section {
+  margin-top: 13px;
+}
+
+.style-title {
+  color: #7a7f71;
+
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+
+  margin-bottom: 7px;
+}
+
+
+/* Options */
+
+.style-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.style-options button {
+  min-height: 34px;
+
+  border: 2px solid #29272a;
+  background: #fffdf3;
+  color: #29272a;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  font-size: 9px;
+
+  box-shadow: 2px 2px 0 #29272a;
+
+  transition: transform .12s, box-shadow .12s, background .12s;
+}
+
+.style-options button:hover {
+  background: #edb0bd;
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #29272a;
+}
+
+.style-options button:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+
+/* Skin dots */
+
+.skin-dot {
+  width: 14px;
+  height: 14px;
+
+  display: inline-block;
+
+  border: 2px solid #29272a;
+}
+
+.skin-dot-black {
+  background: #242529;
+}
+
+.skin-dot-golden {
+  background: #d6a84f;
+}
+
+.skin-dot-white {
+  background: #eee9dc;
+}
+
+.skin-dot-pink {
+  background: #e7a5b5;
+}
+
+
+/* Done */
+
+.style-done {
+  width: 100%;
+  height: 36px;
+
+  margin-top: 15px;
+
+  border: 2px solid #29272a;
+  background: #29272a;
+  color: #fff8e9;
+
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+
+  box-shadow: 3px 3px 0 #d46e87;
+}
+
+.style-done:hover {
+  background: #d46e87;
+}
+/* =================================
+   ZUZU SKINS — FULL PIXEL SHADING
+   ================================= */
+
+/* ---------- BLACK ---------- */
+
+.pixel-cat.skin-black .cat-head,
+.pixel-cat.skin-black .cat-ear,
+.pixel-cat.skin-black .cat-body {
+  background: #242529;
+}
+
+.pixel-cat.skin-black .cat-head {
+  box-shadow:
+    inset 6px 6px 0 #35373b,
+    inset -6px -6px 0 #17181b;
+}
+
+.pixel-cat.skin-black .cat-ear {
+  box-shadow:
+    inset 4px 4px 0 #35373b,
+    inset -4px -4px 0 #17181b;
+}
+
+.pixel-cat.skin-black .cat-body {
+  box-shadow:
+    inset 6px 5px 0 #35373b,
+    inset -6px -5px 0 #17181b;
+}
+
+
+/* ---------- GOLDEN ---------- */
+
+.pixel-cat.skin-golden .cat-head,
+.pixel-cat.skin-golden .cat-ear,
+.pixel-cat.skin-golden .cat-body {
+  background: #c99b3b;
+}
+
+.pixel-cat.skin-golden .cat-head {
+  box-shadow:
+    inset 6px 6px 0 #e0bd61,
+    inset -6px -6px 0 #9b7228;
+}
+
+.pixel-cat.skin-golden .cat-ear {
+  box-shadow:
+    inset 4px 4px 0 #e0bd61,
+    inset -4px -4px 0 #9b7228;
+}
+
+.pixel-cat.skin-golden .cat-body {
+  box-shadow:
+    inset 6px 5px 0 #dfb95b,
+    inset -6px -5px 0 #9b7228;
+}
+
+
+/* ---------- WHITE ---------- */
+
+.pixel-cat.skin-white .cat-head,
+.pixel-cat.skin-white .cat-ear,
+.pixel-cat.skin-white .cat-body {
+  background: #d9d5c8;
+}
+
+.pixel-cat.skin-white .cat-head {
+  box-shadow:
+    inset 6px 6px 0 #f1eee3,
+    inset -6px -6px 0 #aaa69a;
+}
+
+.pixel-cat.skin-white .cat-ear {
+  box-shadow:
+    inset 4px 4px 0 #f1eee3,
+    inset -4px -4px 0 #aaa69a;
+}
+
+.pixel-cat.skin-white .cat-body {
+  box-shadow:
+    inset 6px 5px 0 #eeeade,
+    inset -6px -5px 0 #aaa69a;
+}
+
+
+/* ---------- PINK ---------- */
+
+.pixel-cat.skin-pink .cat-head,
+.pixel-cat.skin-pink .cat-ear,
+.pixel-cat.skin-pink .cat-body {
+  background: #d98fa3;
+}
+
+.pixel-cat.skin-pink .cat-head {
+  box-shadow:
+    inset 6px 6px 0 #edb0bd,
+    inset -6px -6px 0 #a96578;
+}
+
+.pixel-cat.skin-pink .cat-ear {
+  box-shadow:
+    inset 4px 4px 0 #edb0bd,
+    inset -4px -4px 0 #a96578;
+}
+
+.pixel-cat.skin-pink .cat-body {
+  box-shadow:
+    inset 6px 5px 0 #e8a8b7,
+    inset -6px -5px 0 #a96578;
+}
+/* =================================
+   ZUZU CLOTHES — PIXEL SHADING
+   ================================= */
+
+.zuzu-clothes {
+  position: absolute;
+  pointer-events: none;
+}
+
+
+/* ================================
+   🧣 SCARF
+   ================================ */
+
+.clothes-scarf {
+  z-index: 4;
+
+  left: 39px;
+  bottom: 39px;
+
+  width: 76px;
+  height: 11px;
+
+  background: #d46e87;
+  border: 3px solid #191a1d;
+
+  box-shadow:
+    inset 4px 3px 0 #edb0bd,
+    inset -4px -3px 0 #a34f67;
+}
+
+.clothes-scarf::after {
+  content: "";
+
+  position: absolute;
+
+  right: 5px;
+  top: 7px;
+
+  width: 10px;
+  height: 23px;
+
+  background: #d46e87;
+  border: 3px solid #191a1d;
+
+  box-shadow:
+    inset 3px 2px 0 #edb0bd,
+    inset -3px -2px 0 #a34f67;
+}
+
+
+/* ================================
+   👔 TIE
+   ================================ */
+
+.clothes-tie {
+  z-index: 4;
+
+  left: 68px;
+  bottom: 14px;
+
+  width: 12px;
+  height: 27px;
+
+  background: #d46e87;
+  border: 2px solid #191a1d;
+
+  clip-path: polygon(
+    20% 0,
+    80% 0,
+    100% 25%,
+    65% 100%,
+    35% 100%,
+    0 25%
+  );
+
+  filter: drop-shadow(2px 2px 0 #191a1d);
+}
+
+.clothes-tie::before {
+  content: "";
+
+  position: absolute;
+
+  left: 2px;
+  top: 2px;
+
+  width: 3px;
+  height: 17px;
+
+  background: #edb0bd;
+}
+
+
+/* ================================
+   🧥 HOODIE
+   ================================ */
+
+.clothes-hoodie {
+  z-index: 2;
+
+  left: 43px;
+  bottom: 3px;
+
+  width: 68px;
+  height: 40px;
+
+  background: #817d98;
+
+  border: 5px solid #191a1d;
+
+  border-radius: 17px 17px 12px 12px;
+
+  box-shadow:
+    inset 6px 5px 0 #a8a3bd,
+    inset -6px -5px 0 #5f5b72;
+}
+
+
+/* Hoodie pocket */
+
+.clothes-hoodie::before {
+  content: "";
+
+  position: absolute;
+
+  left: 17px;
+  bottom: 5px;
+
+  width: 29px;
+  height: 10px;
+
+  background: #6c687f;
+
+  border: 3px solid #191a1d;
+
+  box-shadow:
+    inset 3px 2px 0 #8e899f;
+}
+
+
+/* Hoodie strings */
+
+.clothes-hoodie::after {
+  content: "";
+
+  position: absolute;
+
+  left: 22px;
+  top: 4px;
+
+  width: 3px;
+  height: 12px;
+
+  background: #f1eddc;
+
+  box-shadow:
+    18px 0 0 #f1eddc;
+}
+
+
+/* ================================
+   🎒 BACKPACK
+   ================================ */
+
+.clothes-backpack {
+  z-index: 0;
+
+  left: 13px;
+  bottom: 4px;
+
+  width: 30px;
+  height: 40px;
+
+  background: #c99b3b;
+
+  border: 4px solid #191a1d;
+
+  border-radius: 8px;
+
+  box-shadow:
+    inset 5px 4px 0 #e0bd61,
+    inset -5px -5px 0 #9b7228;
+}
+
+
+/* Backpack pocket */
+
+.clothes-backpack::before {
+  content: "";
+
+  position: absolute;
+
+  left: 4px;
+  bottom: 5px;
+
+  width: 14px;
+  height: 10px;
+
+  background: #b5832f;
+
+  border: 2px solid #191a1d;
+
+  box-shadow:
+    inset 2px 2px 0 #d6a84f;
+}
+
+
+/* Backpack strap */
+
+.clothes-backpack::after {
+  content: "";
+
+  position: absolute;
+
+  right: -9px;
+  top: -2px;
+
+  width: 8px;
+  height: 42px;
+
+  border-right: 3px solid #191a1d;
+
+  border-radius: 50%;
+}
+/* =================================
+   ZUZU EXPRESSIONS
+   ================================= */
+
+/* Eyebrows */
+
+.cat-brow {
+  position: absolute;
+  z-index: 5;
+
+  width: 18px;
+  height: 4px;
+
+  background: #111216;
+
+  transition: transform .2s, top .2s;
+}
+
+.brow-left {
+  left: 17px;
+  top: 18px;
+}
+
+.brow-right {
+  right: 17px;
+  top: 18px;
+}
+
+
+/* Expression mark is hidden normally */
+
+.expression-mark {
+  display: none;
+
+  position: absolute;
+  z-index: 8;
+
+  right: -17px;
+  top: -10px;
+
+  font-family: 'Space Mono', monospace;
+  font-size: 24px;
+  font-weight: 700;
+
+  color: #f2c84b;
+
+  -webkit-text-stroke: 2px #111216;
+
+  transform: rotate(-8deg);
+}
+
+
+/* =================================
+   SHOCKED 😳
+   ================================= */
+
+.mood-shocked .cat-eye {
+  width: 24px;
+  height: 27px;
+
+  top: 25px;
+
+  background: #fffdf3;
+
+  border: 4px solid #111216;
+
+  box-shadow:
+    inset 5px 5px 0 #f2c84b;
+}
+
+.mood-shocked .brow-left {
+  transform: rotate(-12deg);
+  top: 17px;
+}
+
+.mood-shocked .brow-right {
+  transform: rotate(12deg);
+  top: 17px;
+}
+
+.mood-shocked .expression-mark {
+  display: block;
+}
+
+
+/* =================================
+   SAD 😢
+   ================================= */
+
+.mood-sad .cat-eye {
+  height: 16px;
+  top: 32px;
+
+  background: #f2c84b;
+
+  border: 4px solid #111216;
+}
+
+.mood-sad .brow-left {
+  transform: rotate(18deg);
+  top: 25px;
+}
+
+.mood-sad .brow-right {
+  transform: rotate(-18deg);
+  top: 25px;
+}
+
+.mood-sad .cat-mouth {
+  width: 12px;
+  height: 7px;
+
+  left: 42px;
+  top: 66px;
+
+  border-bottom: 0;
+  border-top: 2px solid #ee8a92;
+
+  border-radius: 50%;
+}
+
+
+/* =================================
+   SMUG 😏
+   ================================= */
+
+.mood-smug .cat-eye {
+  height: 10px;
+  top: 34px;
+
+  background: #f2c84b;
+
+  border-width: 3px;
+}
+
+.mood-smug .brow-left {
+  transform: rotate(12deg);
+}
+
+.mood-smug .brow-right {
+  transform: rotate(-18deg);
+}
+
+.mood-smug .cat-mouth {
+  width: 14px;
+  height: 6px;
+
+  left: 41px;
+  top: 61px;
+
+  border-bottom: 3px solid #ee8a92;
+  border-left: 0;
+  border-right: 0;
+}
+
+
+/* =================================
+   EXCITED 🤩
+   ================================= */
+
+.mood-excited .cat-eye {
+  width: 22px;
+  height: 22px;
+
+  top: 27px;
+
+  background: #f2c84b;
+
+  border: 4px solid #111216;
+
+  box-shadow:
+    inset 5px 0 0 #f7e5a1,
+    inset 0 0 0 3px #f2c84b;
+}
+
+.mood-excited .brow-left {
+  transform: rotate(-15deg);
+  top: 18px;
+}
+
+.mood-excited .brow-right {
+  transform: rotate(15deg);
+  top: 18px;
+}
+
+.mood-excited .cat-mouth {
+  width: 15px;
+  height: 9px;
+
+  left: 40px;
+  top: 60px;
+
+  background: #111216;
+
+  border: 0;
+}
+
+
+/* =================================
+   SLEEPY 😴
+   ================================= */
+
+.mood-sleepy .cat-eye {
+  width: 21px;
+  height: 7px;
+
+  top: 36px;
+
+  background: transparent;
+
+  border: 0;
+  border-bottom: 3px solid #f2c84b;
+
+  box-shadow: none;
+}
+
+.mood-sleepy .brow-left,
+.mood-sleepy .brow-right {
+  display: none;
+}
+
+.mood-sleepy .cat-mouth {
+  width: 9px;
+  height: 5px;
+
+  left: 43px;
+  top: 63px;
+
+  border-bottom: 2px solid #ee8a92;
+}
+
+
+/* =================================
+   EXISTING MOODS — EYEBROWS
+   ================================= */
+
+.mood-angry .brow-left {
+  transform: rotate(18deg);
+  top: 20px;
+}
+
+.mood-angry .brow-right {
+  transform: rotate(-18deg);
+  top: 20px;
+}
+
+.mood-judging .brow-left {
+  transform: rotate(12deg);
+}
+
+.mood-judging .brow-right {
+  transform: rotate(-4deg);
+}
+
+.mood-confused .brow-left {
+  transform: rotate(-15deg);
+  top: 18px;
+}
+
+.mood-confused .brow-right {
+  transform: rotate(10deg);
+  top: 24px;
+}
+
+/* =================================
+   ZUZU BLINKING
+   ================================= */
+
+.cat-eye {
+  transition:
+    height 0.08s ease,
+    transform 0.08s ease;
+}
+
+.cat-eye.blinking {
+  height: 4px !important;
+  transform: translateY(9px);
+  box-shadow: none !important;
 }
