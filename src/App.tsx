@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowUpRight, Heart, Star, Zap } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { enable } from '@tauri-apps/plugin-autostart';
+import { invoke } from '@tauri-apps/api/core';
 
 const playSound = (file: string) => {
   const audio = new Audio(`/sounds/${file}`);
@@ -436,52 +437,41 @@ nextMood =
   }
 };
 
-  const sendMessage = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
 
-    const cleanInput = input.trim();
+  const cleanInput = input.trim();
 
-    if (!cleanInput) return;
+  if (!cleanInput) return;
 
-    const lowerInput = cleanInput.toLowerCase();
+  setInput('');
+  setMenuOpen(false);
+  setMood('confused');
+  setMessage('hmm... thinking...');
+  setIsTalking(true);
+  setBubbleVisible(true);
 
-    const matchedReaction =
-      lowerInput.includes('stud') ||
-      lowerInput.includes('finish')
-        ? {
-            mood: 'celebrating' as Mood,
-            message:
-              'YOU FINISHED? I am putting this in the history books.',
-          }
-        : lowerInput.includes('later') ||
-            lowerInput.includes('tomorrow')
-          ? {
-              mood: 'suspicious' as Mood,
-              message:
-                'Sure. And I am the Prime Minister.',
-            }
-          : lowerInput.includes('procrast') ||
-              lowerInput.includes('nothing')
-            ? {
-                mood: 'disappointed' as Mood,
-                message:
-                  'Bold of you to announce that to the witness.',
-              }
-            : {
-                mood: 'confused' as Mood,
-                message:
-                  'Interesting. Concerning. But interesting.',
-              };
+  try {
+    const response = await invoke<string>('ask_zuzu', {
+      message: cleanInput,
+    });
 
-    setMood(matchedReaction.mood);
-    setMessage(matchedReaction.message);
-    setInput('');
+    setMessage(response);
+    setMood('happy');
     setIsTalking(true);
-    setSparkles(
-      matchedReaction.mood === 'celebrating'
-    );
+    setInteractionCount((count) => count + 1);
+    setLastAction('chatted');
     setBubbleVisible(true);
-  };
+    playSound('zuzu-blip.mp3');
+  } catch (error) {
+    console.error('ZUZU AI error:', error);
+
+    setMessage(`ERROR: ${String(error)}`);
+    setMood('confused');
+    setIsTalking(true);
+    setBubbleVisible(true);
+  }
+};
 
 const changeAccessory = (newAccessory: Accessory) => {
   setAccessory(newAccessory);
