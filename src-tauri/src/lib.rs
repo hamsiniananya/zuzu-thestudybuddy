@@ -1,8 +1,18 @@
+use std::sync::Mutex;
+use tauri::State;
+
+struct ZuzuMemory {
+    messages: Mutex<Vec<serde_json::Value>>,
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     dotenvy::from_filename("../.env").ok();
 
     tauri::Builder::default()
+        .manage(ZuzuMemory {
+            messages: Mutex::new(Vec::new()),
+        })
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .setup(|app| {
             if cfg!(debug_assertions) {
@@ -21,27 +31,19 @@ pub fn run() {
 }
 
 #[tauri::command]
-async fn ask_zuzu(message: String) -> Result<String, String> {
+async fn ask_zuzu(
+    message: String,
+    memory: State<'_, ZuzuMemory>,
+) -> Result<String, String> {
+
     let api_key = std::env::var("OPENROUTER_API_KEY")
         .map_err(|_| "OPENROUTER_API_KEY is not set".to_string())?;
 
     let client = reqwest::Client::new();
 
-    let response = client
-        .post("https://openrouter.ai/api/v1/chat/completions")
-        .bearer_auth(api_key)
-        .header("Content-Type", "application/json")
-        .header("X-Title", "ZUZU")
-        .json(&serde_json::json!({
-    "model": "openai/gpt-5-mini",
-    "max_tokens": 150,
-    "reasoning": {
-        "effort": "minimal"
-    },
-    "messages": [
-        {
-            "role": "system",
-            "content": r#"
+    let system_message = serde_json::json!({
+        "role": "system",
+        "content": r#"
 You are ZUZU, a tiny chaotic desktop study companion.
 
 PERSONALITY:
@@ -71,14 +73,40 @@ IMPORTANT RESPONSE RULES:
 - ZUZU is a companion, not a tutor.
 
 Your replies should feel like something a tiny chaotic creature would actually say out loud.
-"# 
-        },
-        {
+"#
+    });
+
+    // Add the new user message to memory
+    let conversation = {
+        let mut history = memory
+            .messages
+            .lock()
+            .map_err(|_| "Could not access Zuzu memory".to_string())?;
+
+        history.push(serde_json::json!({
             "role": "user",
             "content": message
-        }
-    ]
-}))
+        }));
+
+        let mut messages = vec![system_message];
+        messages.extend(history.iter().cloned());
+
+        messages
+    };
+
+    let response = client
+        .post("https://openrouter.ai/api/v1/chat/completions")
+        .bearer_auth(api_key)
+        .header("Content-Type", "application/json")
+        .header("X-Title", "ZUZU")
+        .json(&serde_json::json!({
+            "model": "openai/gpt-5-mini",
+            "max_tokens": 150,
+            "reasoning": {
+                "effort": "minimal"
+            },
+            "messages": conversation
+        }))
         .send()
         .await
         .map_err(|e| format!("Request failed: {}", e))?;
@@ -102,8 +130,23 @@ Your replies should feel like something a tiny chaotic creature would actually s
         .await
         .map_err(|e| format!("Could not read OpenRouter response: {}", e))?;
 
-    data["choices"][0]["message"]["content"]
+    let reply = data["choices"][0]["message"]["content"]
         .as_str()
         .map(|text| text.to_string())
-        .ok_or_else(|| "Zuzu received an empty AI response.".to_string())
+        .ok_or_else(|| "Zuzu received an empty AI response.".to_string())?;
+
+    // Store Zuzu's response in memory too
+    {
+        let mut history = memory
+            .messages
+            .lock()
+            .map_err(|_| "Could not access Zuzu memory".to_string())?;
+
+        history.push(serde_json::json!({
+            "role": "assistant",
+            "content": reply
+        }));
+    }
+
+    Ok(reply)
 }
