@@ -532,6 +532,9 @@ const changeClothes = (newClothes: Clothes) => {
   setBubbleVisible(true);
   playSound('zuzu-click.mp3');
 };
+  const quitZuzu = async () => {
+  await getCurrentWindow().close();
+};
 
   const toggleMenu = () => {
   if (isDragging.current) {
@@ -833,6 +836,24 @@ const changeClothes = (newClothes: Clothes) => {
                 <ArrowUpRight size={16} />
               </button>
             </form>
+            <button
+  type="button"
+  onClick={quitZuzu}
+  style={{
+    width: '100%',
+    marginTop: '10px',
+    padding: '10px',
+    border: '2px solid #2f3038',
+    background: '#e8dfe5',
+    color: '#2f3038',
+    fontFamily: 'monospace',
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  }}
+>
+  ✕ QUIT ZUZU
+</button>
           </div>
         )}
       </div>

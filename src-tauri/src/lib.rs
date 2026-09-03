@@ -1,5 +1,6 @@
 use std::sync::Mutex;
-use tauri::State;
+
+use tauri::{Manager, State};
 
 struct ZuzuMemory {
     messages: Mutex<Vec<serde_json::Value>>,
@@ -10,6 +11,11 @@ pub fn run() {
     dotenvy::from_filename("../.env").ok();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.set_focus();
+    }
+}))
         .manage(ZuzuMemory {
             messages: Mutex::new(Vec::new()),
         })
@@ -31,11 +37,7 @@ pub fn run() {
 }
 
 #[tauri::command]
-async fn ask_zuzu(
-    message: String,
-    memory: State<'_, ZuzuMemory>,
-) -> Result<String, String> {
-
+async fn ask_zuzu(message: String, memory: State<'_, ZuzuMemory>) -> Result<String, String> {
     let api_key = std::env::var("OPENROUTER_API_KEY")
         .map_err(|_| "OPENROUTER_API_KEY is not set".to_string())?;
 
@@ -119,10 +121,7 @@ Your replies should feel like something a tiny chaotic creature would actually s
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
 
-        return Err(format!(
-            "OpenRouter error {}: {}",
-            status, body
-        ));
+        return Err(format!("OpenRouter error {}: {}", status, body));
     }
 
     let data: serde_json::Value = response
