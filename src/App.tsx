@@ -3,6 +3,9 @@ import { ArrowUpRight, Heart, Star, Zap } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { enable } from '@tauri-apps/plugin-autostart';
 import { invoke } from '@tauri-apps/api/core';
+import { supabase } from "./lib/supabase";
+
+const ROOM_ID = 'd4ee5133-0518-4af5-b370-759152125284';
 
 const playSound = (file: string) => {
   const audio = new Audio(`/sounds/${file}`);
@@ -127,6 +130,38 @@ function App() {
       console.error('ZUZU autostart could not be enabled:', error);
     });
   }, []);
+  // Test Supabase connection
+      useEffect(() => {
+    supabase
+      .from("rooms")
+      .select("*")
+      .then(({ data, error }) => {
+        console.log("Supabase test:", { data, error });
+      });
+  }, []);
+  // Listen for new messages in the Supabase channel
+  useEffect(() => {
+  const channel = supabase
+    .channel(`room-${ROOM_ID}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+      },
+      (payload) => {
+        console.log('NEW KIKI/ZUZU MESSAGE:', payload.new);
+      }
+    )
+    .subscribe((status) => {
+  console.log('ZUZU realtime status:', status);
+});
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
   const [mood, setMood] = useState<Mood>('happy');
   const [message, setMessage] = useState(starterMessage);
   const [input, setInput] = useState('');
@@ -159,7 +194,23 @@ const [clothes, setClothes] = useState<Clothes>(() => {
 });
 
 const [styleOpen, setStyleOpen] = useState(false);
+const [apiKey, setApiKey] = useState('');
+const [apiKeyConfigured, setApiKeyConfigured] = useState<boolean | null>(null);
+const [savingApiKey, setSavingApiKey] = useState(false);
+const [apiKeyError, setApiKeyError] = useState('');
+useEffect(() => {
+  const checkApiKey = async () => {
+    try {
+      const key = await invoke<string | null>('get_api_key');
+      setApiKeyConfigured(Boolean(key));
+    } catch (error) {
+      console.error('Could not check ZUZU API key:', error);
+      setApiKeyConfigured(false);
+    }
+  };
 
+  checkApiKey();
+}, []);
   const stageRef = useRef<HTMLDivElement>(null);
   
 
@@ -436,7 +487,38 @@ nextMood =
     setLastAction('gave-up');
   }
 };
+const saveApiKey = async (event: FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
 
+  const cleanKey = apiKey.trim();
+
+  if (!cleanKey) {
+    setApiKeyError('give me an API key first.');
+    return;
+  }
+
+  setSavingApiKey(true);
+  setApiKeyError('');
+
+  try {
+    await invoke('set_api_key', {
+      apiKey: cleanKey,
+    });
+
+    setApiKeyConfigured(true);
+    setApiKey('');
+    setMessage('okay. now I can actually talk to you.');
+    setMood('happy');
+    setIsTalking(true);
+    setBubbleVisible(true);
+    playSound('zuzu-happy.mp3');
+  } catch (error) {
+    console.error('Could not save API key:', error);
+    setApiKeyError(String(error));
+  } finally {
+    setSavingApiKey(false);
+  }
+};
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
   event.preventDefault();
 
@@ -635,6 +717,128 @@ const changeClothes = (newClothes: Clothes) => {
 
   return (
     <main className="desktop-pet-stage">
+    {apiKeyConfigured === false && (
+  <div
+    style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'rgba(0, 0, 0, 0.55)',
+      fontFamily: 'monospace',
+    }}
+  >
+    <div
+      style={{
+        width: '290px',
+        padding: '22px',
+        background: '#fff8ea',
+        border: '3px solid #2f3038',
+        boxShadow: '6px 6px 0 #d96b85',
+      }}
+    >
+      <div
+        style={{
+          fontSize: '11px',
+          letterSpacing: '2px',
+          color: '#d96b85',
+          marginBottom: '12px',
+          fontWeight: 'bold',
+        }}
+      >
+        ZUZU SAYS
+      </div>
+
+      <div
+        style={{
+          fontSize: '17px',
+          fontWeight: 'bold',
+          lineHeight: 1.4,
+          color: '#2f3038',
+          marginBottom: '8px',
+        }}
+      >
+        wait. I need one thing.
+      </div>
+
+      <p
+        style={{
+          fontSize: '12px',
+          lineHeight: 1.5,
+          color: '#555',
+          marginBottom: '16px',
+        }}
+      >
+        Give me your OpenRouter API key so I can talk to you.
+      </p>
+
+      <form onSubmit={saveApiKey}>
+        <input
+          type="password"
+          value={apiKey}
+          onChange={(event) => setApiKey(event.target.value)}
+          placeholder="sk-or-v1-..."
+          autoFocus
+          style={{
+            width: '100%',
+            boxSizing: 'border-box',
+            padding: '10px',
+            border: '2px solid #2f3038',
+            background: '#fff',
+            color: '#2f3038',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            outline: 'none',
+          }}
+        />
+
+        {apiKeyError && (
+          <div
+            style={{
+              marginTop: '8px',
+              fontSize: '11px',
+              color: '#c43d58',
+            }}
+          >
+            {apiKeyError}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={savingApiKey}
+          style={{
+            width: '100%',
+            marginTop: '12px',
+            padding: '10px',
+            border: '2px solid #2f3038',
+            background: '#d8f0df',
+            color: '#2f3038',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            cursor: savingApiKey ? 'wait' : 'pointer',
+          }}
+        >
+          {savingApiKey ? 'SAVING...' : 'SAVE KEY'}
+        </button>
+      </form>
+
+      <p
+        style={{
+          marginTop: '12px',
+          fontSize: '9px',
+          lineHeight: 1.4,
+          color: '#777',
+        }}
+      >
+        Your key is stored securely on this computer.
+      </p>
+    </div>
+  </div>
+)}
       <div
         className="scanlines"
         aria-hidden="true"

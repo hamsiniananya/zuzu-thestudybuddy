@@ -1,5 +1,5 @@
 use std::sync::Mutex;
-
+use keyring::Entry;
 use tauri::{Manager, State};
 
 struct ZuzuMemory {
@@ -31,15 +31,42 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![ask_zuzu])
+        .invoke_handler(tauri::generate_handler![
+    ask_zuzu,
+    set_api_key,
+    get_api_key
+])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 #[tauri::command]
+fn set_api_key(api_key: String) -> Result<(), String> {
+    let entry = Entry::new("ZUZU", "openrouter_api_key")
+        .map_err(|e| format!("Could not access secure storage: {}", e))?;
+
+    entry
+        .set_password(&api_key)
+        .map_err(|e| format!("Could not save API key: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+fn get_api_key() -> Result<Option<String>, String> {
+    let entry = Entry::new("ZUZU", "openrouter_api_key")
+        .map_err(|e| format!("Could not access secure storage: {}", e))?;
+
+    match entry.get_password() {
+        Ok(key) => Ok(Some(key)),
+        Err(_) => Ok(None),
+    }
+}
+
+#[tauri::command]
 async fn ask_zuzu(message: String, memory: State<'_, ZuzuMemory>) -> Result<String, String> {
-    let api_key = std::env::var("OPENROUTER_API_KEY")
-        .map_err(|_| "OPENROUTER_API_KEY is not set".to_string())?;
+    let api_key = get_api_key()?
+        .ok_or_else(|| "OpenRouter API key is not configured".to_string())?;
 
     let client = reqwest::Client::new();
 
