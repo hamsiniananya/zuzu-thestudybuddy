@@ -1,9 +1,201 @@
-use std::sync::Mutex;
+use std::{
+    fs,
+    path::{Component, Path, PathBuf},
+    process::Command,
+    sync::Mutex,
+};
 use keyring::Entry;
 use tauri::{Manager, State};
 
 struct ZuzuMemory {
     messages: Mutex<Vec<serde_json::Value>>,
+}
+
+fn zuzu_directory() -> Result<PathBuf, String> {
+    let documents = std::env::var_os("USERPROFILE")
+        .map(PathBuf::from)
+        .ok_or_else(|| "Could not find the user profile directory".to_string())?
+        .join("Documents");
+
+    let directory = documents.join("Zuzu");
+    fs::create_dir_all(&directory)
+        .map_err(|error| format!("Could not create the Zuzu folder: {}", error))?;
+
+    Ok(directory)
+}
+
+fn safe_file_path(filename: &str) -> Result<PathBuf, String> {
+    let path = Path::new(filename);
+    let mut components = path.components();
+
+    if path.as_os_str().is_empty()
+        || path.is_absolute()
+        || components.next() != Some(Component::Normal(path.as_os_str()))
+        || components.next().is_some()
+    {
+        return Err("Only a single filename inside the Zuzu folder is allowed".to_string());
+    }
+
+    Ok(zuzu_directory()?.join(path))
+}
+
+#[tauri::command]
+fn list_files() -> Result<Vec<String>, String> {
+    let directory = zuzu_directory()?;
+    let mut files = Vec::new();
+
+    for entry in fs::read_dir(directory)
+        .map_err(|error| format!("Could not list the Zuzu folder: {}", error))?
+    {
+        let entry = entry.map_err(|error| format!("Could not read a directory entry: {}", error))?;
+        if entry
+            .file_type()
+            .map_err(|error| format!("Could not inspect a directory entry: {}", error))?
+            .is_file()
+        {
+            files.push(entry.file_name().to_string_lossy().into_owned());
+        }
+    }
+
+    files.sort();
+    Ok(files)
+}
+
+#[tauri::command]
+fn read_text_file(filename: String) -> Result<String, String> {
+    let path = safe_file_path(&filename)?;
+    fs::read_to_string(&path)
+        .map_err(|error| format!("Could not read {}: {}", filename, error))
+}
+
+#[tauri::command]
+fn create_text_file(filename: String, content: String) -> Result<(), String> {
+    let path = safe_file_path(&filename)?;
+    fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&path)
+        .and_then(|mut file| {
+            use std::io::Write;
+            file.write_all(content.as_bytes())
+        })
+        .map_err(|error| format!("Could not create {}: {}", filename, error))
+}
+
+#[tauri::command]
+fn write_text_file(filename: String, content: String) -> Result<(), String> {
+    let path = safe_file_path(&filename)?;
+    if !path.is_file() {
+        return Err(format!("{} does not exist in the Zuzu folder", filename));
+    }
+
+    fs::write(&path, content)
+        .map_err(|error| format!("Could not write {}: {}", filename, error))
+}
+
+#[cfg(target_os = "windows")]
+fn open_with_default_application(path: &Path) -> Result<(), String> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::UI::Shell::ShellExecuteW;
+
+    let operation: Vec<u16> = std::ffi::OsStr::new("open")
+        .encode_wide()
+        .chain(Some(0))
+        .collect();
+    let file: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+
+    let result = unsafe {
+        ShellExecuteW(
+            std::ptr::null_mut(),
+            operation.as_ptr(),
+            file.as_ptr(),
+            std::ptr::null(),
+            std::ptr::null(),
+            1,
+        )
+    };
+
+    if result as isize <= 32 {
+        return Err(format!("Could not open {}", path.display()));
+    }
+
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn open_with_default_application(_path: &Path) -> Result<(), String> {
+    Err("Opening local files is only supported on Windows".to_string())
+}
+
+#[tauri::command]
+fn open_file(filename: String) -> Result<(), String> {
+    let path = safe_file_path(&filename)?;
+    if !path.is_file() {
+        return Err(format!("{} does not exist in the Zuzu folder", filename));
+    }
+
+    open_with_default_application(&path)
+}
+
+#[tauri::command]
+fn open_folder() -> Result<(), String> {
+    let directory = zuzu_directory()?;
+    open_with_default_application(&directory)
+}
+
+#[cfg(target_os = "windows")]
+fn open_application_path(application: &str) -> Result<PathBuf, String> {
+    let local_app_data = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
+    let program_files = std::env::var_os("ProgramFiles").map(PathBuf::from);
+    let program_files_x86 = std::env::var_os("ProgramFiles(x86)").map(PathBuf::from);
+    let windows = std::env::var_os("WINDIR").map(PathBuf::from);
+
+    let candidates = match application {
+        "Visual Studio Code" => vec![
+            local_app_data.map(|path| path.join("Programs\\Microsoft VS Code\\Code.exe")),
+            program_files.map(|path| path.join("Microsoft VS Code\\Code.exe")),
+        ],
+        "Google Chrome" => vec![
+            local_app_data.map(|path| path.join("Google\\Chrome\\Application\\chrome.exe")),
+            program_files.map(|path| path.join("Google\\Chrome\\Application\\chrome.exe")),
+            program_files_x86.map(|path| path.join("Google\\Chrome\\Application\\chrome.exe")),
+        ],
+        "Microsoft Edge" => vec![
+            program_files.map(|path| path.join("Microsoft\\Edge\\Application\\msedge.exe")),
+            program_files_x86.map(|path| path.join("Microsoft\\Edge\\Application\\msedge.exe")),
+        ],
+        "Windows File Explorer" => vec![
+            windows.map(|path| path.join("explorer.exe")),
+        ],
+        "Notepad" => vec![
+            windows.map(|path| path.join("System32\\notepad.exe")),
+        ],
+        _ => return Err("Unsupported application".to_string()),
+    };
+
+    candidates
+        .into_iter()
+        .flatten()
+        .find(|path| path.is_file())
+        .ok_or_else(|| format!("Could not find {}", application))
+}
+
+#[tauri::command]
+fn open_application(application: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        let path = open_application_path(&application)?;
+        Command::new(&path)
+            .spawn()
+            .map_err(|error| format!("Could not open {}: {}", application, error))?;
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = application;
+        Err("Opening applications is only supported on Windows".to_string())
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -34,7 +226,14 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
     ask_zuzu,
     set_api_key,
-    get_api_key
+    get_api_key,
+    list_files,
+    read_text_file,
+    create_text_file,
+    write_text_file,
+    open_file,
+    open_folder,
+    open_application
 ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
