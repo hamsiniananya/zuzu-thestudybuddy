@@ -4,6 +4,11 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { enable } from '@tauri-apps/plugin-autostart';
 import { invoke } from '@tauri-apps/api/core';
 import { supabase } from "./lib/supabase";
+import {
+  routeZuzuResponse,
+  sendWhatsAppMessage,
+  type PendingWhatsAppMessage,
+} from "./lib/tauri";
 
 const ROOM_ID = 'd4ee5133-0518-4af5-b370-759152125284';
 
@@ -165,6 +170,8 @@ function App() {
   const [mood, setMood] = useState<Mood>('happy');
   const [message, setMessage] = useState(starterMessage);
   const [input, setInput] = useState('');
+  const [pendingWhatsAppMessage, setPendingWhatsAppMessage] =
+    useState<PendingWhatsAppMessage | null>(null);
   const [isTalking, setIsTalking] = useState(false);
   const [isBlinking, setIsBlinking] = useState(false);
   const [isAutonomous, setIsAutonomous] = useState(false);
@@ -534,11 +541,75 @@ const saveApiKey = async (event: FormEvent<HTMLFormElement>) => {
   setBubbleVisible(true);
 
   try {
+    if (pendingWhatsAppMessage) {
+      const normalizedInput = cleanInput.toLowerCase().replace(/[.!?]+$/g, '').trim();
+      const confirmations = new Set([
+        'yes',
+        'send',
+        'send it',
+        'haan',
+        'avunu',
+        'pampu',
+        'pampinchu',
+        'cheyyi',
+      ]);
+      const cancellations = new Set([
+        'no',
+        'cancel',
+        'vaddu',
+        'oddu',
+        "don't send",
+      ]);
+
+      if (confirmations.has(normalizedInput)) {
+        const result = await sendWhatsAppMessage(
+          pendingWhatsAppMessage.alias,
+          pendingWhatsAppMessage.message,
+        );
+        setPendingWhatsAppMessage(null);
+        setMessage(result);
+        setMood('happy');
+        setIsTalking(true);
+        setBubbleVisible(true);
+        playSound('zuzu-happy.mp3');
+        return;
+      }
+
+      if (cancellations.has(normalizedInput)) {
+        setPendingWhatsAppMessage(null);
+        setMessage('Okay — I cancelled that WhatsApp message.');
+        setMood('happy');
+        setIsTalking(true);
+        setBubbleVisible(true);
+        return;
+      }
+    }
+
     const response = await invoke<string>('ask_zuzu', {
       message: cleanInput,
     });
 
-    setMessage(response);
+    const routedResponse = await routeZuzuResponse(response);
+    if (
+      typeof routedResponse !== 'string' &&
+      routedResponse.kind === 'whatsapp_confirmation'
+    ) {
+      const confirmation: PendingWhatsAppMessage = {
+        alias: routedResponse.alias,
+        recipient: routedResponse.recipient,
+        message: routedResponse.message,
+      };
+      setPendingWhatsAppMessage({
+        alias: confirmation.alias,
+        recipient: confirmation.recipient,
+        message: confirmation.message,
+      });
+      setMessage(
+        `I'll send this to ${confirmation.recipient}:\n\n${confirmation.message}\n\nSend?`,
+      );
+    } else if (typeof routedResponse === 'string') {
+      setMessage(routedResponse);
+    }
     setMood('happy');
     setIsTalking(true);
     setInteractionCount((count) => count + 1);
@@ -548,7 +619,11 @@ const saveApiKey = async (event: FormEvent<HTMLFormElement>) => {
   } catch (error) {
     console.error('ZUZU AI error:', error);
 
-    setMessage(`ERROR: ${String(error)}`);
+    setMessage(
+      pendingWhatsAppMessage
+        ? String(error)
+        : `ERROR: ${String(error)}`,
+    );
     setMood('confused');
     setIsTalking(true);
     setBubbleVisible(true);
